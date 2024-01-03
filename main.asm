@@ -1,0 +1,75 @@
+;
+; pe21_ex2.asm
+;
+; Created: 9/30/2023 2:05:14 PM
+; Author : tuan minh
+;
+
+
+; Replace with your application code
+.ORG 0
+.DEF TEMP = R16
+.DEF TEMP1 = R17
+
+		JMP TIMER1 ; COMMENT THIS LINE WHEN RUNNING TIMER0
+
+		LDI TEMP, 0x08 
+		OUT DDRB, TEMP ; OC0A IS OUTPUT
+		LDI TEMP, 0
+		OUT TCCR0A, TEMP
+		OUT TCCR0B, TEMP
+
+MAIN: 
+		SBI PORTB, 3
+		CALL DELAY_32us
+		CBI PORTB, 3
+		CALL DELAY_32us
+		RJMP MAIN
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+DELAY_32us:
+		LDI TEMP, 224 
+		OUT TCNT0, TEMP
+		LDI TEMP, 0x02 ; clk source, prescaling clk/8
+		OUT TCCR0B, TEMP
+
+DELAY_LOOP:
+		SBIS TIFR0, TOV0
+		RJMP DELAY_LOOP
+		LDI TEMP, 0
+		OUT TCCR0B, TEMP
+		SBI TIFR0, TOV0
+		RET
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+TIMER1:
+		LDI TEMP, 0x08
+		OUT DDRB, TEMP
+
+BLINK:	
+		SBI PORTB, 3
+		CALL DELAYT1_32u
+		CBI PORTB, 3	
+		CALL DELAYT1_32u
+		RJMP BLINK
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+DELAYT1_32u:
+		LDI TEMP, 0b00001001 ; CTC MODE, NO PRESCALER
+		STS TCCR1B, TEMP
+		LDI TEMP, 0x00
+		LDI TEMP1, 0xE0
+		STS OCR1AH, TEMP
+		STS OCR1AL, TEMP1
+		CLR TEMP
+		STS TCNT1H, TEMP
+		STS TCNT1L, TEMP
+
+DELAY32u_LOOP:
+		SBIS TIFR1, OCF1A
+		RJMP DELAY32u_LOOP 
+		SBI TIFR1, OCF1A ; RESET TIMER1
+		CLR TEMP
+		STS TCCR1A, TEMP
+		STS TCCR1B, TEMP
+		RET
