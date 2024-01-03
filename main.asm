@@ -1,0 +1,51 @@
+;
+; pe3_ex2.asm
+;
+; Created: 10/23/2023 6:12:31 PM
+; Author : tuan minh
+;
+
+
+; Replace with your application code
+.ORG 0
+.DEF TEMP = R16
+.DEF COUNTER = R17
+		CLR COUNTER
+		SBI DDRC, 0
+		RJMP MAIN
+
+.ORG $001A
+		RJMP TIMER1_COMPA
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+MAIN:
+		LDI TEMP, (1 << OCIE1A)
+		STS TIMSK1, TEMP
+		SEI
+		LDI TEMP, 0
+		STS TCCR1A, TEMP
+		LDI TEMP, (1 << WGM12) | (1 << CS11) ; CTC, TOP = OCR1A, CLK/8
+		STS TCCR1B, TEMP
+		LDI TEMP, 0x03 ; 0x03E8 WHEN DOING COUNTER = 5 
+		STS OCR1AH, TEMP
+		LDI TEMP, 0xE8
+		STS OCR1AL, TEMP
+
+STAY: 
+		RJMP STAY
+		
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+TIMER1_COMPA:
+		IN TEMP, PORTC
+		INC COUNTER ; UNCOMMENT WHEN DOING COUNTER = 5
+		CPI COUNTER, 5
+		BREQ TOGGLE 
+		RJMP PASS
+
+TOGGLE:
+		COM TEMP
+		OUT PORTC, TEMP
+		CLR COUNTER
+
+PASS:
+		RETI
